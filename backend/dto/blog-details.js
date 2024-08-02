@@ -1,8 +1,8 @@
 class BlogDetailsDTO{
     constructor(blog){
         this._id=blog._id,
-        this.author=blog.author,
         this.content=blog.content,
+        this.createdAt=blog.createdAt,
         this.title=blog.title,
         this.photo=blog.photoPath,
         this.authorName=blog.author.name,

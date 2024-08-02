@@ -1,11 +1,19 @@
 const Joi =require("joi")
 const fs =require("fs")
 const Blog =require("../models/blog")
-const {BACKEND_SERVER_PATH}=require("../config/index")
+const {BACKEND_SERVER_PATH, CLOUD_NAME, API_KEY, API_SECRET}=require("../config/index")
 const BlogDTO=require("../dto/blog")
 const BlogDetailsDTO=require("../dto/blog-details");
 const Comment=require("../models/comment")
 const mongodbIdPattern = /^[0-9a-fA-F]{24}$/;
+const cloudinary=require("cloudinary").v2;
+
+ // Configuration
+ cloudinary.config({ 
+    cloud_name: CLOUD_NAME, 
+    api_key: API_KEY, 
+    api_secret: API_SECRET // Click 'View Credentials' below to copy your API secret
+});
 
 const blogController={
     async create(req,res,next){
@@ -32,16 +40,18 @@ const blogController={
         const {title,author,content,photo}=req.body;  //de-structure is come from req.body
 
         // read as buffer
-        const buffer = Buffer.from(
-              photo.replace(/^data:image\/(png|jpg|jpeg);base64,/, ""),
-              "base64"
-            );
+        // const buffer = Buffer.from(
+        //       photo.replace(/^data:image\/(png|jpg|jpeg);base64,/, ""),
+        //       "base64"
+        //     );
 
             //allot a random name
-            const imagePath=`${Date.now()}-${author}.png`
-
+            // const imagePath=`${Date.now()}-${author}.png`
+//save to cloudinary
+                let response;
             try {
-                fs.writeFileSync(`storage/${imagePath}`,buffer) //We get fs functionality this from the node side
+               response=await cloudinary.uploader.upload(photo)
+                //fs.writeFileSync(`storage/${imagePath}`,buffer) //We get fs functionality this from the node side
             } catch (error) {
                 return next(error)
             }
@@ -53,7 +63,8 @@ const blogController={
                     title,
                     author,
                     content,
-                    photoPath: `${BACKEND_SERVER_PATH}/storage/${imagePath}`, //BACKEND_SERVER_PATH is coming from env config.env file
+                    //photoPath: `${BACKEND_SERVER_PATH}/storage/${imagePath}`, //BACKEND_SERVER_PATH is coming from env config.env file
+                    photoPath: response.url,
                 })
                 await newBlog.save() //save the blog in database
             } catch (error) {
@@ -138,22 +149,28 @@ const blogController={
             //new photo update
 
                 // read as buffer
-        const buffer = Buffer.from(
-            photo.replace(/^data:image\/(png|jpg|jpeg);base64,/, ""),
-            "base64"
-          );
+        // const buffer = Buffer.from(
+        //     photo.replace(/^data:image\/(png|jpg|jpeg);base64,/, ""),
+        //     "base64"
+        //   );
 
           //allot a random name
-          const imagePath=`${Date.now()}-${author}.png`
+        //   const imagePath=`${Date.now()}-${author}.png`
+        let response;
 
           try {
-              fs.writeFileSync(`storage/${imagePath}`,buffer) //We get fs functionality this from the node side
+            response =await cloudinary.uploader.upload(photo)
+             // fs.writeFileSync(`storage/${imagePath}`,buffer) //We get fs functionality this from the node side
           } catch (error) {
               return next(error)
           }
 
           await Blog.updateOne({_id:blogId},
-            {title,content,photoPath:`${BACKEND_SERVER_PATH}/storage/${imagePath}`}
+            {title,
+            content,
+            // photoPath:`${BACKEND_SERVER_PATH}/storage/${imagePath}`
+            photoPath:response.url,
+        }
           )
 
         }

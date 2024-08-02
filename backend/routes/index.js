@@ -19,7 +19,7 @@ router.post("/login",authController.login)
 //logout
 router.post("/logout",auth,authController.logout)
 //refresh
-// router.get("/refresh",authController.refresh)
+router.get("/refresh",authController.refresh)
 
 // blog
 
